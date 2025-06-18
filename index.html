@@ -6,10 +6,10 @@
     <title>Modern Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter, Roboto, Lato, Source Code Pro -->
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato&family=Roboto&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom Styles -->
     <style>
         body {
@@ -28,16 +28,6 @@
         }
         #notebook-editor-wrapper {
              height: calc(100vh - 300px);
-             position: relative;
-        }
-        #drawing-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none; /* Make it transparent to mouse events by default */
-        }
-        #drawing-canvas.active {
-            pointer-events: auto; /* Enable mouse events when a drawing tool is selected */
         }
         #notebook-editor {
             outline: none;
@@ -86,10 +76,6 @@
             opacity: 0;
             cursor: pointer;
         }
-        .tool-active {
-            background-color: #e0e7ff; /* indigo-100 */
-            border: 1px solid #6366f1; /* indigo-500 */
-        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -100,7 +86,7 @@
             <!-- Header -->
             <header class="flex justify-between items-center p-6 bg-white border-b-2 border-gray-200">
                 <div class="flex items-center">
-                    <h1 id="main-header-title" class="text-2xl font-semibold text-gray-700">Dashboard</h1>
+                    <h1 id="main-header-title" class="text-2xl font-semibold text-gray-700">Home</h1>
                 </div>
                 
                 <div class="flex items-center space-x-4">
@@ -124,9 +110,9 @@
 
             <!-- Content Area -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-                <div id="main-container" class="container mx-auto h-full">
+                <div class="container mx-auto">
                     <!-- Table View -->
-                    <div id="table-view" class="h-full">
+                    <div id="table-view">
                         <div class="bg-white p-4 rounded-lg shadow-md">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
                                 <h2 class="text-xl font-bold text-gray-800 mb-2 sm:mb-0">My Links</h2>
@@ -154,14 +140,45 @@
                                             <th class="py-2 px-3 text-center">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="link-table-body" class="text-gray-600 text-xs"></tbody>
+                                    <tbody id="link-table-body" class="text-gray-600 text-xs">
+                                        <tr class="border-b border-gray-200 hover:bg-gray-100" data-notebook-content="">
+                                            <td class="py-2 px-3 topic-cell" contenteditable="true">Tailwind CSS</td>
+                                            <td class="py-2 px-3 title-cell" contenteditable="true">Official Documentation</td>
+                                            <td class="py-2 px-3 text-center">
+                                                <button class="open-notebook-btn bg-gray-200 text-gray-700 text-xs font-semibold py-0.5 px-2 rounded-md hover:bg-gray-300 transition duration-200">OPEN</button>
+                                            </td>
+                                            <td class="py-2 px-3 text-center flex items-center justify-center">
+                                                <button class="star-btn text-gray-400 hover:text-yellow-500 transition-colors duration-200 mr-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                                </button>
+                                                <button class="delete-btn text-gray-400 hover:text-red-500 transition-colors duration-200">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                         <tr class="border-b border-gray-200 hover:bg-gray-100" data-notebook-content="">
+                                            <td class="py-2 px-3 topic-cell" contenteditable="true">JavaScript</td>
+                                            <td class="py-2 px-3 title-cell" contenteditable="true">MDN Web Docs</td>
+                                            <td class="py-2 px-3 text-center">
+                                                <button class="open-notebook-btn bg-gray-200 text-gray-700 text-xs font-semibold py-0.5 px-2 rounded-md hover:bg-gray-300 transition duration-200">OPEN</button>
+                                            </td>
+                                            <td class="py-2 px-3 text-center flex items-center justify-center">
+                                                 <button class="star-btn text-gray-400 hover:text-yellow-500 transition-colors duration-200 mr-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                                </button>
+                                                <button class="delete-btn text-gray-400 hover:text-red-500 transition-colors duration-200">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                     <!-- Content Page View -->
-                    <div id="content-view" class="hidden h-full">
-                         <div class="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
+                    <div id="content-view" class="hidden">
+                         <div class="bg-white p-4 rounded-lg shadow-md">
                              <div class="flex justify-between items-center mb-4 border-b pb-3">
                                  <h2 id="content-page-title" class="text-xl font-bold text-gray-800 truncate"></h2>
                                  <button id="back-to-home-btn" class="bg-indigo-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-indigo-600 flex items-center space-x-2 text-sm">
@@ -171,32 +188,11 @@
                              </div>
                              <!-- Notebook Toolbar -->
                              <div id="notebook-toolbar" class="flex items-center flex-wrap gap-2 border-b p-2 mb-2 bg-gray-50 rounded-md">
-                                <button data-command="undo" class="p-2 rounded hover:bg-gray-200" title="Undo">
-                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 00-1.132 0L6.75 15.366a1 1 0 00.566 1.834h8.368a1 1 0 00.566-1.834l-4.184-4.166z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 00-1.132 0L6.75 15.366a1 1 0 00.566 1.834h8.368a1 1 0 00.566-1.834l-4.184-4.166zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
-                                </button>
-                                <button data-command="redo" class="p-2 rounded hover:bg-gray-200" title="Redo">
-                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 11.2a1 1 0 011.132 0l4.184 4.166a1 1 0 01-.566 1.834H7.318a1 1 0 01-.566-1.834l4.184-4.166z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 11.2a1 1 0 011.132 0l4.184 4.166a1 1 0 01-.566 1.834H7.318a1 1 0 01-.566-1.834l4.184-4.166zM6 10a8 8 0 1016 0 8 8 0 00-16 0z" /></svg>
-                                </button>
-                                <div class="w-px h-6 bg-gray-300"></div>
                                 <button data-command="bold" class="p-2 rounded hover:bg-gray-200 font-bold" title="Bold">B</button>
                                 <button data-command="italic" class="p-2 rounded hover:bg-gray-200 italic" title="Italic">I</button>
                                 <button data-command="underline" class="p-2 rounded hover:bg-gray-200 underline" title="Underline">U</button>
-                                <select id="font-selector" class="p-2 rounded border border-gray-300 hover:bg-gray-200 text-sm" title="Select Font">
-                                    <option value="Inter, sans-serif" style="font-family: 'Inter', sans-serif;">Inter</option>
-                                    <option value="Roboto, sans-serif" style="font-family: 'Roboto', sans-serif;">Roboto</option>
-                                    <option value="Lato, sans-serif" style="font-family: 'Lato', sans-serif;">Lato</option>
-                                    <option value="Source Code Pro, monospace" style="font-family: 'Source Code Pro', monospace;">Source Code Pro</option>
-                                    <option value="Arial, sans-serif" style="font-family: Arial, sans-serif;">Arial</option>
-                                    <option value="Verdana, sans-serif" style="font-family: Verdana, sans-serif;">Verdana</option>
-                                    <option value="Georgia, serif" style="font-family: Georgia, serif;">Georgia</option>
-                                    <option value="Times New Roman, serif" style="font-family: 'Times New Roman', serif;">Times New Roman</option>
-                                </select>
-                                <div class="w-px h-6 bg-gray-300"></div>
                                 <button data-command="decreaseFontSize" class="p-2 rounded hover:bg-gray-200 font-semibold text-sm" title="Decrease Font Size">A-</button>
                                 <button data-command="increaseFontSize" class="p-2 rounded hover:bg-gray-200 font-semibold text-base" title="Increase Font Size">A+</button>
-                                <button data-command="insertTextbox" class="p-2 rounded hover:bg-gray-200" title="Insert Text Box">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10h16V7M8 7V4h8v3m-4 13v-3" /></svg>
-                                </button>
                                 <div class="w-px h-6 bg-gray-300"></div>
                                 <button data-command="insertTable" class="p-2 rounded hover:bg-gray-200" title="Insert Table">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -228,7 +224,6 @@
                                     <!-- Line numbers will be populated by JS -->
                                 </div>
                                 <div id="notebook-editor" class="flex-1" contenteditable="true"></div>
-                                <canvas id="drawing-canvas"></canvas>
                              </div>
                          </div>
                     </div>
@@ -239,19 +234,6 @@
     
     <!-- Filter Dropdown - This will be moved around by JS -->
     <div id="topic-filter-dropdown" class="absolute w-48 bg-white rounded-md shadow-lg z-50 hidden">
-        <div class="p-2 border-b border-gray-200">
-            <h4 class="text-xs font-semibold text-gray-500 uppercase mb-1">Sort</h4>
-             <div class="flex flex-col text-sm">
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort-order" value="asc" checked>
-                    <span>Sort A-Z</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort-order" value="desc">
-                    <span>Sort Z-A</span>
-                </label>
-            </div>
-        </div>
         <div class="p-2 border-b border-gray-200">
             <input type="text" id="topic-filter-search" placeholder="Search..." class="w-full px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 normal-case font-normal">
         </div>
@@ -300,26 +282,8 @@
         </div>
     </div>
 
-    <!-- Unsaved Changes Modal -->
-    <div id="unsaved-changes-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-2">Unsaved Changes</h3>
-            <p class="text-sm text-gray-600 mb-6">You have unsaved changes. What would you like to do?</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-leave" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button id="leave-without-saving" type="button" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium">Leave without Saving</button>
-                <button id="export-and-leave" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium">Export & Leave</button>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // --- GLOBAL STATES ---
-        let currentRowForNotebook = null;
-        let activeFilters = new Set();
-        let hasUnsavedChanges = false;
-        let isLeavingPage = false;
-
         // --- SCRIPT FOR VIEW TOGGLING ---
         const mainHeaderTitle = document.getElementById('main-header-title');
         const tableView = document.getElementById('table-view');
@@ -335,7 +299,7 @@
             currentRowForNotebook = null;
             tableView.classList.remove('hidden');
             contentView.classList.add('hidden');
-            hasUnsavedChanges = true;
+            mainHeaderTitle.textContent = 'Home';
         });
 
         // --- SCRIPT FOR INTERACTIVE TABLE ---
@@ -385,11 +349,8 @@
 
         addRowBtn.addEventListener('click', () => {
             createAndAppendRow({ topic: 'New Topic', title: 'New Title', content: '', isImportant: false });
-            initializeFilters(); 
-            hasUnsavedChanges = true;
+            initializeFilters(); // Update filters when new row is added
         });
-
-        tableBody.addEventListener('input', () => { hasUnsavedChanges = true; });
 
         tableBody.addEventListener('click', (event) => {
             const starBtn = event.target.closest('.star-btn');
@@ -398,24 +359,23 @@
 
             if (deleteBtn) {
                 deleteBtn.closest('tr').remove();
-                initializeFilters(); 
-                hasUnsavedChanges = true;
+                initializeFilters(); // Update filters when a row is deleted
             } else if (openBtn) {
                 const row = openBtn.closest('tr');
                 const topic = row.querySelector('.topic-cell').textContent.trim();
                 const title = row.querySelector('.title-cell').textContent.trim();
                 currentRowForNotebook = row;
                 notebookEditor.innerHTML = row.dataset.notebookContent || '<div><br></div>';
-                updateLineNumbers(); 
+                updateLineNumbers(); // Initial update
                 contentPageTitle.textContent = `${topic} - ${title}`;
                 tableView.classList.add('hidden');
                 contentView.classList.remove('hidden');
+                mainHeaderTitle.textContent = 'Notebook';
             } else if (starBtn) {
                 const row = starBtn.closest('tr');
                 row.classList.toggle('bg-yellow-100');
                 const svg = starBtn.querySelector('svg');
                 starBtn.classList.toggle('text-yellow-500');
-                hasUnsavedChanges = true;
                 if (starBtn.classList.contains('text-yellow-500')) {
                     svg.setAttribute('fill', 'currentColor');
                 } else {
@@ -428,8 +388,6 @@
         const notebookToolbar = document.getElementById('notebook-toolbar');
         const imageUpload = document.getElementById('image-upload');
         const createTableModal = document.getElementById('create-table-modal');
-        const drawingCanvas = document.getElementById('drawing-canvas');
-        const fontSelector = document.getElementById('font-selector');
         
         notebookToolbar.addEventListener('click', (event) => {
             const button = event.target.closest('button');
@@ -437,7 +395,6 @@
             const command = button.dataset.command;
             
             notebookEditor.focus();
-            hasUnsavedChanges = true;
 
             if (command === 'insertTable') {
                 createTableModal.classList.remove('hidden');
@@ -471,10 +428,6 @@
                 document.execCommand(command, false, null);
             }
         });
-        
-        notebookEditor.addEventListener('input', () => {
-            hasUnsavedChanges = true;
-        });
 
         // Handle color changes
         notebookToolbar.querySelectorAll('input[type="color"]').forEach(input => {
@@ -482,11 +435,6 @@
                 notebookEditor.focus();
                 document.execCommand(event.target.dataset.command, false, event.target.value);
             });
-        });
-        
-        fontSelector.addEventListener('change', (event) => {
-            notebookEditor.focus();
-            document.execCommand('fontName', false, event.target.value);
         });
 
         // Handle image upload
@@ -498,7 +446,23 @@
                     document.execCommand('insertHTML', false, imgHtml);
                 };
                 reader.readAsDataURL(event.target.files[0]);
-                event.target.value = '';
+                event.target.value = ''; // Reset file input
+            }
+        });
+
+        notebookEditor.addEventListener('paste', (event) => {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.type.indexOf('image') === 0) {
+                    event.preventDefault();
+                    const file = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imgHtml = `<div><img src="${e.target.result}" class="rounded-lg my-2"></div>`;
+                        document.execCommand('insertHTML', false, imgHtml);
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
         });
         
@@ -540,6 +504,7 @@
             notebookEditor.scrollTop = e.target.scrollTop;
         });
         
+
         function getSelectionClosest(selector) {
             let node = document.getSelection().anchorNode;
             if (!node) return null;
@@ -563,7 +528,7 @@
             const cols = parseInt(document.getElementById('table-cols').value, 10);
 
             if (rows > 0 && cols > 0) {
-                let tableHtml = `<table class="table-fixed border-collapse border border-slate-400 w-full text-sm"><thead><tr>`;
+                let tableHtml = '<table class="border-collapse border border-slate-400 w-full text-sm"><thead><tr>';
                 for(let i = 0; i < cols; i++) tableHtml += `<th class="border border-slate-300 p-2" contenteditable="true">Header ${i+1}</th>`;
                 tableHtml += '</tr></thead><tbody>';
                 for(let i = 0; i < rows; i++) {
@@ -576,7 +541,6 @@
                 notebookEditor.focus();
                 document.execCommand('insertHTML', false, tableHtml);
                 createTableModal.classList.add('hidden');
-                hasUnsavedChanges = true;
             }
         });
 
@@ -658,23 +622,6 @@
         });
 
         applyFilterBtn.addEventListener('click', () => {
-            // Sorting Logic
-            const sortOrder = document.querySelector('input[name="sort-order"]:checked').value;
-            const rows = Array.from(tableBody.querySelectorAll('tr'));
-            
-            rows.sort((a, b) => {
-                const aText = a.querySelector('.topic-cell').textContent.trim().toLowerCase();
-                const bText = b.querySelector('.topic-cell').textContent.trim().toLowerCase();
-                if (sortOrder === 'asc') {
-                    return aText.localeCompare(bText);
-                } else {
-                    return bText.localeCompare(aText);
-                }
-            });
-
-            rows.forEach(row => tableBody.appendChild(row));
-
-            // Filtering Logic
             const selectedTopics = new Set();
             filterOptionsContainer.querySelectorAll('.filter-option-cb:checked').forEach(checkbox => {
                 selectedTopics.add(checkbox.value);
@@ -696,9 +643,6 @@
             initializeFilters();
             tableBody.querySelectorAll('tr').forEach(row => row.style.display = '');
             filterBtn.classList.remove('filter-active');
-            document.querySelector('input[name="sort-order"][value="asc"]').checked = true;
-            // Re-sort to ascending
-            applyFilterBtn.click();
             filterDropdown.classList.add('hidden');
         });
 
@@ -715,8 +659,16 @@
         const cancelExportBtn = document.getElementById('cancel-export');
         const confirmExportBtn = document.getElementById('confirm-export');
 
-        function triggerExport() {
-             const filename = document.getElementById('export-filename').value || 'dashboard-data.json';
+        exportBtn.addEventListener('click', () => {
+            exportModal.classList.remove('hidden');
+        });
+
+        cancelExportBtn.addEventListener('click', () => {
+            exportModal.classList.add('hidden');
+        });
+
+        confirmExportBtn.addEventListener('click', () => {
+            const filename = document.getElementById('export-filename').value || 'dashboard-data.json';
             const dataToExport = [];
             tableBody.querySelectorAll('tr').forEach(row => {
                 const topic = row.querySelector('.topic-cell').textContent.trim();
@@ -737,18 +689,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             exportModal.classList.add('hidden');
-            hasUnsavedChanges = false;
-        }
-
-        exportBtn.addEventListener('click', () => {
-            exportModal.classList.remove('hidden');
         });
-
-        cancelExportBtn.addEventListener('click', () => {
-            exportModal.classList.add('hidden');
-        });
-
-        confirmExportBtn.addEventListener('click', triggerExport);
 
         importFile.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -765,7 +706,6 @@
                         createAndAppendRow(item);
                     });
                     initializeFilters();
-                    hasUnsavedChanges = false;
                 } catch (error) {
                     console.error("Error importing file:", error);
                     // Consider adding a user-friendly error message here
@@ -775,38 +715,6 @@
             };
             reader.readAsText(file);
         });
-        
-        // --- SCRIPT FOR UNSAVED CHANGES PROMPT ---
-        const unsavedChangesModal = document.getElementById('unsaved-changes-modal');
-        const cancelLeaveBtn = document.getElementById('cancel-leave');
-        const leaveWithoutSavingBtn = document.getElementById('leave-without-saving');
-        const exportAndLeaveBtn = document.getElementById('export-and-leave');
-
-        window.addEventListener('beforeunload', (event) => {
-            if (hasUnsavedChanges && !isLeavingPage) {
-                event.preventDefault();
-                unsavedChangesModal.classList.remove('hidden');
-                // For legacy browsers
-                event.returnValue = ''; 
-            }
-        });
-
-        cancelLeaveBtn.addEventListener('click', () => {
-            unsavedChangesModal.classList.add('hidden');
-        });
-        
-        leaveWithoutSavingBtn.addEventListener('click', () => {
-            isLeavingPage = true;
-            window.location.reload(); // Or navigate away
-        });
-        
-        exportAndLeaveBtn.addEventListener('click', () => {
-            isLeavingPage = true;
-            triggerExport();
-            // Allow a brief moment for the download to initiate
-            setTimeout(() => window.location.reload(), 100);
-        });
-
 
         // Initial setup on page load
         initializeFilters();
