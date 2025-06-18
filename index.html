@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter, Roboto, Lato, Source Code Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato&family=Roboto&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* A light gray background */
+        }
+        /* Style for contenteditable cells to look like normal text */
+        [contenteditable]:focus {
+            outline: 2px solid #6366f1; /* Indigo color on focus */
+            background-color: #eef2ff;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        .filter-active svg {
+            color: #4f46e5; /* Indigo-600 */
+        }
+        #notebook-editor-wrapper {
+             height: calc(100vh - 300px);
+             position: relative;
+        }
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Make it transparent to mouse events by default */
+        }
+        #drawing-canvas.active {
+            pointer-events: auto; /* Enable mouse events when a drawing tool is selected */
+        }
+        #notebook-editor {
+            outline: none;
+            line-height: 1.5rem; /* Crucial for alignment */
+            font-size: 0.875rem; /* text-sm */
+            padding: 0.5rem;
+        }
+        /* This is the key fix: remove default margins from p, div etc. inside the editor */
+        #notebook-editor > * {
+            margin: 0;
+            padding: 0;
+            min-height: 1.5rem; /* Match line-height to prevent empty lines from collapsing */
+        }
+        #line-numbers {
+            font-family: monospace;
+            line-height: 1.5rem; /* Crucial for alignment */
+            font-size: 0.875rem; /* text-sm */
+            padding: 0.5rem;
+        }
+        #notebook-editor img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        /* Style for color input to make it look like a button */
+        .color-input-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 0.25rem;
+        }
+        .color-input-wrapper:hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        .color-input-wrapper input[type="color"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .tool-active {
+            background-color: #e0e7ff; /* indigo-100 */
+            border: 1px solid #6366f1; /* indigo-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-200">
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="flex justify-between items-center p-6 bg-white border-b-2 border-gray-200">
+                <div class="flex items-center">
+                    <h1 id="main-header-title" class="text-2xl font-semibold text-gray-700">Dashboard</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                     <!-- Import/Export Buttons -->
+                    <button id="export-btn" class="text-gray-500 hover:text-gray-700" title="Export Data">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    </button>
+                    <label for="import-file" class="text-gray-500 hover:text-gray-700 cursor-pointer" title="Import Data">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    </label>
+                    <input type="file" id="import-file" class="hidden" accept="application/json">
+                    
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    </button>
+                    <div class="relative">
+                        <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/6366f1/white?text=User" alt="User avatar">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                <div id="main-container" class="container mx-auto h-full">
+                    <!-- Table View -->
+                    <div id="table-view" class="h-full">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                                <h2 class="text-xl font-bold text-gray-800 mb-2 sm:mb-0">My Links</h2>
+                                <button id="add-row-btn" class="w-full sm:w-auto bg-indigo-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300 ease-in-out flex items-center justify-center space-x-2 text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                    <span>Add New Link</span>
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left table-auto">
+                                    <thead>
+                                        <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+                                            <th class="py-2 px-3">
+                                                <div class="flex items-center justify-between">
+                                                    <span>Topic</span>
+                                                    <div class="relative">
+                                                        <button id="topic-filter-btn" class="text-gray-500 hover:text-gray-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" /></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th class="py-2 px-3">Title</th>
+                                            <th class="py-2 px-3 text-center">Open</th>
+                                            <th class="py-2 px-3 text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="link-table-body" class="text-gray-600 text-xs"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Content Page View -->
+                    <div id="content-view" class="hidden h-full">
+                         <div class="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
+                             <div class="flex justify-between items-center mb-4 border-b pb-3">
+                                 <h2 id="content-page-title" class="text-xl font-bold text-gray-800 truncate"></h2>
+                                 <button id="back-to-home-btn" class="bg-indigo-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-indigo-600 flex items-center space-x-2 text-sm">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                     <span>Back to Home</span>
+                                 </button>
+                             </div>
+                             <!-- Notebook Toolbar -->
+                             <div id="notebook-toolbar" class="flex items-center flex-wrap gap-2 border-b p-2 mb-2 bg-gray-50 rounded-md">
+                                <button data-command="undo" class="p-2 rounded hover:bg-gray-200" title="Undo">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 00-1.132 0L6.75 15.366a1 1 0 00.566 1.834h8.368a1 1 0 00.566-1.834l-4.184-4.166z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 00-1.132 0L6.75 15.366a1 1 0 00.566 1.834h8.368a1 1 0 00.566-1.834l-4.184-4.166zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+                                </button>
+                                <button data-command="redo" class="p-2 rounded hover:bg-gray-200" title="Redo">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 11.2a1 1 0 011.132 0l4.184 4.166a1 1 0 01-.566 1.834H7.318a1 1 0 01-.566-1.834l4.184-4.166z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 11.2a1 1 0 011.132 0l4.184 4.166a1 1 0 01-.566 1.834H7.318a1 1 0 01-.566-1.834l4.184-4.166zM6 10a8 8 0 1016 0 8 8 0 00-16 0z" /></svg>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300"></div>
+                                <button data-command="bold" class="p-2 rounded hover:bg-gray-200 font-bold" title="Bold">B</button>
+                                <button data-command="italic" class="p-2 rounded hover:bg-gray-200 italic" title="Italic">I</button>
+                                <button data-command="underline" class="p-2 rounded hover:bg-gray-200 underline" title="Underline">U</button>
+                                <select id="font-selector" class="p-2 rounded border border-gray-300 hover:bg-gray-200 text-sm" title="Select Font">
+                                    <option value="Inter, sans-serif" style="font-family: 'Inter', sans-serif;">Inter</option>
+                                    <option value="Roboto, sans-serif" style="font-family: 'Roboto', sans-serif;">Roboto</option>
+                                    <option value="Lato, sans-serif" style="font-family: 'Lato', sans-serif;">Lato</option>
+                                    <option value="Source Code Pro, monospace" style="font-family: 'Source Code Pro', monospace;">Source Code Pro</option>
+                                    <option value="Arial, sans-serif" style="font-family: Arial, sans-serif;">Arial</option>
+                                    <option value="Verdana, sans-serif" style="font-family: Verdana, sans-serif;">Verdana</option>
+                                    <option value="Georgia, serif" style="font-family: Georgia, serif;">Georgia</option>
+                                    <option value="Times New Roman, serif" style="font-family: 'Times New Roman', serif;">Times New Roman</option>
+                                </select>
+                                <div class="w-px h-6 bg-gray-300"></div>
+                                <button data-command="decreaseFontSize" class="p-2 rounded hover:bg-gray-200 font-semibold text-sm" title="Decrease Font Size">A-</button>
+                                <button data-command="increaseFontSize" class="p-2 rounded hover:bg-gray-200 font-semibold text-base" title="Increase Font Size">A+</button>
+                                <button data-command="insertTextbox" class="p-2 rounded hover:bg-gray-200" title="Insert Text Box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10h16V7M8 7V4h8v3m-4 13v-3" /></svg>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300"></div>
+                                <button data-command="insertTable" class="p-2 rounded hover:bg-gray-200" title="Insert Table">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                </button>
+                                <button id="add-col-btn" data-command="addCol" class="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Add Column" disabled>
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4H7C5.89543 4 5 4.89543 5 6V18C5 19.1046 5.89543 20 7 20H9M15 4H17C18.1046 4 19 4.89543 19 6V18C19 19.1046 18.1046 20 17 20H15M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                                <button id="add-row-btn-table" data-command="addRow" class="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Add Row" disabled>
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(90)"><path d="M9 4H7C5.89543 4 5 4.89543 5 6V18C5 19.1046 5.89543 20 7 20H9M15 4H17C18.1046 4 19 4.89543 19 6V18C19 19.1046 18.1046 20 17 20H15M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300"></div>
+                                <span class="color-input-wrapper" title="Font Color">
+                                    <svg class="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 20V18.35C2 17.89 2.21 17.47 2.59 17.18L11.59 9.82C11.83 9.64 12.17 9.64 12.41 9.82L21.41 17.18C21.79 17.47 22 17.89 22 18.35V20H2Z" fill="currentColor"/><path d="M12 13L18 8L20 10L12 16L4 10L6 8L12 13Z" fill="currentColor" /></svg>
+                                    <input type="color" data-command="foreColor" class="w-full h-full">
+                                </span>
+                                <span class="color-input-wrapper" title="Highlight Color">
+                                    <svg class="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.44 15.06L14.03 16.47L12.62 15.06L9.5 18.18H21.5L15.44 15.06Z" fill="#a8a8a8"/><path d="M10.7813 6.90184L15.2213 2.46184C15.6113 2.07184 16.2413 2.07184 16.6313 2.46184L20.5313 6.36184C20.9213 6.75184 20.9213 7.38184 20.5313 7.77184L16.0913 12.2118C15.9313 12.3718 15.7213 12.4518 15.5013 12.4518H10.1513C9.50128 12.4518 8.95128 11.9018 8.95128 11.2518V7.33184C8.95128 7.11184 9.03128 6.90184 9.19128 6.74184L10.7813 5.15184V6.90184Z" fill="currentColor"/></svg>
+                                    <input type="color" data-command="hiliteColor" class="w-full h-full">
+                                </span>
+                                <div class="w-px h-6 bg-gray-300"></div>
+                                <button data-command="insertImage" class="p-2 rounded hover:bg-gray-200" title="Insert Image">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V6C3 4.89543 3.89543 4 5 4H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3L21 8L11 18H7V14L16 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                                <input type="file" id="image-upload" class="hidden" accept="image/*">
+                             </div>
+                             <!-- Notebook Editor with Line Numbers -->
+                             <div id="notebook-editor-wrapper" class="flex border border-gray-200 rounded-md overflow-y-auto">
+                                <div id="line-numbers" class="text-right text-gray-400 bg-gray-100 select-none border-r border-gray-300">
+                                    <!-- Line numbers will be populated by JS -->
+                                </div>
+                                <div id="notebook-editor" class="flex-1" contenteditable="true"></div>
+                                <canvas id="drawing-canvas"></canvas>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Filter Dropdown - This will be moved around by JS -->
+    <div id="topic-filter-dropdown" class="absolute w-48 bg-white rounded-md shadow-lg z-50 hidden">
+        <div class="p-2 border-b border-gray-200">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase mb-1">Sort</h4>
+             <div class="flex flex-col text-sm">
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="sort-order" value="asc" checked>
+                    <span>Sort A-Z</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="sort-order" value="desc">
+                    <span>Sort Z-A</span>
+                </label>
+            </div>
+        </div>
+        <div class="p-2 border-b border-gray-200">
+            <input type="text" id="topic-filter-search" placeholder="Search..." class="w-full px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 normal-case font-normal">
+        </div>
+        <div id="topic-filter-options" class="py-1 text-gray-700 text-xs font-normal normal-case max-h-48 overflow-y-auto">
+            <!-- Options will be populated by JS -->
+        </div>
+        <div class="border-t border-gray-200 px-2 py-2 flex items-center space-x-2">
+            <button id="apply-filter" class="w-1/2 bg-indigo-500 text-white text-xs font-semibold py-1.5 rounded hover:bg-indigo-600">Apply</button>
+            <button id="reset-filter" class="w-1/2 bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 rounded hover:bg-gray-300">Reset</button>
+        </div>
+    </div>
+    
+    <!-- Create Table Modal -->
+    <div id="create-table-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+            <h3 class="text-lg font-semibold mb-4">Create Table</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="table-rows" class="block text-sm font-medium text-gray-700">Rows</label>
+                    <input type="number" id="table-rows" value="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="table-cols" class="block text-sm font-medium text-gray-700">Columns</label>
+                    <input type="number" id="table-cols" value="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-table-creation" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button id="confirm-table-creation" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Filename Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+            <h3 class="text-lg font-semibold mb-4">Export File</h3>
+            <div>
+                <label for="export-filename" class="block text-sm font-medium text-gray-700">Filename</label>
+                <input type="text" id="export-filename" value="dashboard-data.json" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-export" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button id="confirm-export" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unsaved Changes Modal -->
+    <div id="unsaved-changes-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-2">Unsaved Changes</h3>
+            <p class="text-sm text-gray-600 mb-6">You have unsaved changes. What would you like to do?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-leave" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button id="leave-without-saving" type="button" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium">Leave without Saving</button>
+                <button id="export-and-leave" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium">Export & Leave</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATES ---
+        let currentRowForNotebook = null;
+        let activeFilters = new Set();
+        let hasUnsavedChanges = false;
+        let isLeavingPage = false;
+
+        // --- SCRIPT FOR VIEW TOGGLING ---
+        const mainHeaderTitle = document.getElementById('main-header-title');
+        const tableView = document.getElementById('table-view');
+        const contentView = document.getElementById('content-view');
+        const backToHomeBtn = document.getElementById('back-to-home-btn');
+        const contentPageTitle = document.getElementById('content-page-title');
+        const notebookEditor = document.getElementById('notebook-editor');
+
+        backToHomeBtn.addEventListener('click', () => {
+            if(currentRowForNotebook) {
+                currentRowForNotebook.dataset.notebookContent = notebookEditor.innerHTML;
+            }
+            currentRowForNotebook = null;
+            tableView.classList.remove('hidden');
+            contentView.classList.add('hidden');
+            hasUnsavedChanges = true;
+        });
+
+        // --- SCRIPT FOR INTERACTIVE TABLE ---
+        const addRowBtn = document.getElementById('add-row-btn');
+        const tableBody = document.getElementById('link-table-body');
+
+        function createAndAppendRow(item) {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-200 hover:bg-gray-100';
+            if (item.isImportant) {
+                tr.classList.add('bg-yellow-100');
+            }
+            tr.dataset.notebookContent = item.content || '';
+
+            const topicTd = document.createElement('td');
+            topicTd.className = 'py-2 px-3 topic-cell';
+            topicTd.setAttribute('contenteditable', 'true');
+            topicTd.textContent = item.topic || ''; 
+
+            const titleTd = document.createElement('td');
+            titleTd.className = 'py-2 px-3 title-cell';
+            titleTd.setAttribute('contenteditable', 'true');
+            titleTd.textContent = item.title || '';
+
+            const openTd = document.createElement('td');
+            openTd.className = 'py-2 px-3 text-center';
+            openTd.innerHTML = `<button class="open-notebook-btn bg-gray-200 text-gray-700 text-xs font-semibold py-0.5 px-2 rounded-md hover:bg-gray-300">OPEN</button>`;
+            
+            const actionsTd = document.createElement('td');
+            actionsTd.className = 'py-2 px-3 text-center flex items-center justify-center';
+            const starFill = item.isImportant ? 'currentColor' : 'none';
+            const starColor = item.isImportant ? 'text-yellow-500' : 'text-gray-400';
+            actionsTd.innerHTML = `
+                <button class="star-btn ${starColor} hover:text-yellow-500 transition-colors duration-200 mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="${starFill}" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                </button>
+                <button class="delete-btn text-gray-400 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+            `;
+
+            tr.appendChild(topicTd);
+            tr.appendChild(titleTd);
+            tr.appendChild(openTd);
+            tr.appendChild(actionsTd);
+            
+            tableBody.appendChild(tr);
+        }
+
+        addRowBtn.addEventListener('click', () => {
+            createAndAppendRow({ topic: 'New Topic', title: 'New Title', content: '', isImportant: false });
+            initializeFilters(); 
+            hasUnsavedChanges = true;
+        });
+
+        tableBody.addEventListener('input', () => { hasUnsavedChanges = true; });
+
+        tableBody.addEventListener('click', (event) => {
+            const starBtn = event.target.closest('.star-btn');
+            const deleteBtn = event.target.closest('.delete-btn');
+            const openBtn = event.target.closest('.open-notebook-btn');
+
+            if (deleteBtn) {
+                deleteBtn.closest('tr').remove();
+                initializeFilters(); 
+                hasUnsavedChanges = true;
+            } else if (openBtn) {
+                const row = openBtn.closest('tr');
+                const topic = row.querySelector('.topic-cell').textContent.trim();
+                const title = row.querySelector('.title-cell').textContent.trim();
+                currentRowForNotebook = row;
+                notebookEditor.innerHTML = row.dataset.notebookContent || '<div><br></div>';
+                updateLineNumbers(); 
+                contentPageTitle.textContent = `${topic} - ${title}`;
+                tableView.classList.add('hidden');
+                contentView.classList.remove('hidden');
+            } else if (starBtn) {
+                const row = starBtn.closest('tr');
+                row.classList.toggle('bg-yellow-100');
+                const svg = starBtn.querySelector('svg');
+                starBtn.classList.toggle('text-yellow-500');
+                hasUnsavedChanges = true;
+                if (starBtn.classList.contains('text-yellow-500')) {
+                    svg.setAttribute('fill', 'currentColor');
+                } else {
+                     svg.setAttribute('fill', 'none');
+                }
+            }
+        });
+        
+        // --- SCRIPT FOR NOTEBOOK EDITOR ---
+        const notebookToolbar = document.getElementById('notebook-toolbar');
+        const imageUpload = document.getElementById('image-upload');
+        const createTableModal = document.getElementById('create-table-modal');
+        const drawingCanvas = document.getElementById('drawing-canvas');
+        const fontSelector = document.getElementById('font-selector');
+        
+        notebookToolbar.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if(!button) return;
+            const command = button.dataset.command;
+            
+            notebookEditor.focus();
+            hasUnsavedChanges = true;
+
+            if (command === 'insertTable') {
+                createTableModal.classList.remove('hidden');
+            } else if (command === 'addCol') {
+                const table = getSelectionClosest('table');
+                if (table) table.querySelectorAll('tr').forEach(tr => {
+                    const newCell = tr.appendChild(document.createElement(tr.parentElement.tagName === 'THEAD' ? 'th' : 'td'));
+                    newCell.className = 'border border-slate-300 p-2';
+                    newCell.setAttribute('contenteditable', 'true');
+                });
+            } else if (command === 'addRow') {
+                 const row = getSelectionClosest('tr');
+                 if (row) {
+                    const newRow = row.cloneNode(true);
+                    newRow.querySelectorAll('td, th').forEach(cell => cell.innerHTML = '');
+                    row.parentNode.insertBefore(newRow, row.nextSibling);
+                 }
+            } else if (command === 'insertImage') {
+                imageUpload.click();
+            } else if (command === 'increaseFontSize' || command === 'decreaseFontSize') {
+                const currentSize = parseInt(document.queryCommandValue('fontSize') || '3', 10);
+                let newSize;
+                if (command === 'increaseFontSize') {
+                    newSize = Math.min(7, currentSize + 1);
+                } else {
+                    newSize = Math.max(1, currentSize - 1);
+                }
+                document.execCommand('fontSize', false, newSize);
+            }
+            else {
+                document.execCommand(command, false, null);
+            }
+        });
+        
+        notebookEditor.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+
+        // Handle color changes
+        notebookToolbar.querySelectorAll('input[type="color"]').forEach(input => {
+            input.addEventListener('change', (event) => {
+                notebookEditor.focus();
+                document.execCommand(event.target.dataset.command, false, event.target.value);
+            });
+        });
+        
+        fontSelector.addEventListener('change', (event) => {
+            notebookEditor.focus();
+            document.execCommand('fontName', false, event.target.value);
+        });
+
+        // Handle image upload
+        imageUpload.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imgHtml = `<div><img src="${e.target.result}" class="rounded-lg my-2 max-w-full h-auto"></div>`;
+                    document.execCommand('insertHTML', false, imgHtml);
+                };
+                reader.readAsDataURL(event.target.files[0]);
+                event.target.value = '';
+            }
+        });
+        
+        // --- NOTEBOOK HELPER FUNCTIONS & LINE NUMBERS ---
+        const lineNumbers = document.getElementById('line-numbers');
+        const updateLineNumbers = () => {
+            setTimeout(() => {
+                const lineHeight = parseFloat(window.getComputedStyle(notebookEditor).lineHeight);
+                if (isNaN(lineHeight)) return;
+
+                let html = '';
+                let lineCounter = 1;
+
+                if (notebookEditor.children.length === 0 || notebookEditor.innerHTML === '<div><br></div>') {
+                    html = '<div>1</div>';
+                } else {
+                     for (const child of notebookEditor.children) {
+                        const elementHeight = child.offsetHeight;
+                        const linesOccupied = Math.max(1, Math.round(elementHeight / lineHeight));
+                        html += `<div>${lineCounter}</div>`;
+                        for (let j = 1; j < linesOccupied; j++) {
+                            html += `<div>&nbsp;</div>`; 
+                        }
+                        lineCounter++;
+                    }
+                }
+                
+                if (lineNumbers.innerHTML !== html) {
+                    lineNumbers.innerHTML = html;
+                }
+            }, 50);
+        };
+        
+        const observer = new MutationObserver(updateLineNumbers);
+        observer.observe(notebookEditor, { childList: true, subtree: true, characterData: true, attributes: true });
+
+        document.getElementById('notebook-editor-wrapper').addEventListener('scroll', (e) => {
+            lineNumbers.scrollTop = e.target.scrollTop;
+            notebookEditor.scrollTop = e.target.scrollTop;
+        });
+        
+        function getSelectionClosest(selector) {
+            let node = document.getSelection().anchorNode;
+            if (!node) return null;
+            return (node.nodeType === 1 ? node : node.parentElement).closest(selector);
+        }
+
+        document.addEventListener('selectionchange', () => {
+            const inTable = !!getSelectionClosest('table');
+            document.getElementById('add-col-btn').disabled = !inTable;
+            document.getElementById('add-row-btn-table').disabled = !inTable;
+        });
+        
+        // --- TABLE CREATION MODAL LOGIC ---
+        const confirmTableBtn = document.getElementById('confirm-table-creation');
+        const cancelTableBtn = document.getElementById('cancel-table-creation');
+
+        cancelTableBtn.addEventListener('click', () => createTableModal.classList.add('hidden'));
+
+        confirmTableBtn.addEventListener('click', () => {
+            const rows = parseInt(document.getElementById('table-rows').value, 10);
+            const cols = parseInt(document.getElementById('table-cols').value, 10);
+
+            if (rows > 0 && cols > 0) {
+                let tableHtml = `<table class="table-fixed border-collapse border border-slate-400 w-full text-sm"><thead><tr>`;
+                for(let i = 0; i < cols; i++) tableHtml += `<th class="border border-slate-300 p-2" contenteditable="true">Header ${i+1}</th>`;
+                tableHtml += '</tr></thead><tbody>';
+                for(let i = 0; i < rows; i++) {
+                    tableHtml += '<tr>';
+                    for(let j = 0; j < cols; j++) tableHtml += `<td class="border border-slate-300 p-2" contenteditable="true"></td>`;
+                    tableHtml += '</tr>';
+                }
+                tableHtml += '</tbody></table><div>&nbsp;</div>'; // Use DIV instead of P
+                
+                notebookEditor.focus();
+                document.execCommand('insertHTML', false, tableHtml);
+                createTableModal.classList.add('hidden');
+                hasUnsavedChanges = true;
+            }
+        });
+
+        // --- SCRIPT FOR TOPIC FILTER ---
+        const filterBtn = document.getElementById('topic-filter-btn');
+        const filterDropdown = document.getElementById('topic-filter-dropdown');
+        const filterOptionsContainer = document.getElementById('topic-filter-options');
+        const applyFilterBtn = document.getElementById('apply-filter');
+        const resetFilterBtn = document.getElementById('reset-filter');
+        const filterSearchInput = document.getElementById('topic-filter-search');
+
+        function getAllTopics() {
+            const topics = new Set();
+            tableBody.querySelectorAll('tr .topic-cell').forEach(cell => {
+                topics.add(cell.textContent.trim());
+            });
+            return topics;
+        }
+
+        function initializeFilters() {
+            activeFilters = getAllTopics();
+        }
+
+
+        function populateFilterOptions() {
+            const topics = getAllTopics();
+            filterOptionsContainer.innerHTML = ''; 
+
+            const sortedTopics = [...topics].sort();
+
+            const selectAllHtml = `<label class="flex items-center px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox" class="form-checkbox h-3.5 w-3.5 text-indigo-600" id="filter-select-all">
+                    <span class="ml-2 font-semibold">(Select All)</span>
+                </label>`;
+            filterOptionsContainer.insertAdjacentHTML('beforeend', selectAllHtml);
+
+            sortedTopics.forEach(topic => {
+                const isChecked = activeFilters.has(topic);
+                const optionHtml = `<label class="flex items-center px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                        <input type="checkbox" class="form-checkbox h-3.5 w-3.5 text-indigo-600 filter-option-cb" value="${topic}" ${isChecked ? 'checked' : ''}>
+                        <span class="ml-2">${topic}</span>
+                    </label>`;
+                filterOptionsContainer.insertAdjacentHTML('beforeend', optionHtml);
+            });
+            
+            document.getElementById('filter-select-all').addEventListener('change', (e) => {
+                 filterOptionsContainer.querySelectorAll('.filter-option-cb').forEach(cb => {
+                    if(cb.parentElement.style.display !== 'none') {
+                       cb.checked = e.target.checked;
+                    }
+                });
+            });
+        }
+
+        filterBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isHidden = filterDropdown.classList.contains('hidden');
+            if (isHidden) {
+                populateFilterOptions();
+                document.body.appendChild(filterDropdown);
+                const rect = filterBtn.getBoundingClientRect();
+                filterDropdown.style.top = `${rect.bottom + window.scrollY}px`;
+                filterDropdown.style.left = `${rect.left + window.scrollX - filterDropdown.offsetWidth + rect.width}px`;
+                filterDropdown.classList.remove('hidden');
+            } else {
+                filterDropdown.classList.add('hidden');
+            }
+        });
+        
+        filterSearchInput.addEventListener('keyup', () => {
+            const searchTerm = filterSearchInput.value.toLowerCase();
+            const labels = filterOptionsContainer.querySelectorAll('label');
+            
+            labels.forEach(label => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.id === 'filter-select-all') return;
+                label.style.display = label.textContent.toLowerCase().includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+
+        applyFilterBtn.addEventListener('click', () => {
+            // Sorting Logic
+            const sortOrder = document.querySelector('input[name="sort-order"]:checked').value;
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const aText = a.querySelector('.topic-cell').textContent.trim().toLowerCase();
+                const bText = b.querySelector('.topic-cell').textContent.trim().toLowerCase();
+                if (sortOrder === 'asc') {
+                    return aText.localeCompare(bText);
+                } else {
+                    return bText.localeCompare(aText);
+                }
+            });
+
+            rows.forEach(row => tableBody.appendChild(row));
+
+            // Filtering Logic
+            const selectedTopics = new Set();
+            filterOptionsContainer.querySelectorAll('.filter-option-cb:checked').forEach(checkbox => {
+                selectedTopics.add(checkbox.value);
+            });
+            activeFilters = selectedTopics;
+
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const topicCell = row.querySelector('.topic-cell');
+                if (topicCell) {
+                    row.style.display = activeFilters.has(topicCell.textContent.trim()) ? '' : 'none';
+                }
+            });
+
+            filterBtn.classList.toggle('filter-active', activeFilters.size !== getAllTopics().size);
+            filterDropdown.classList.add('hidden');
+        });
+        
+        resetFilterBtn.addEventListener('click', () => {
+            initializeFilters();
+            tableBody.querySelectorAll('tr').forEach(row => row.style.display = '');
+            filterBtn.classList.remove('filter-active');
+            document.querySelector('input[name="sort-order"][value="asc"]').checked = true;
+            // Re-sort to ascending
+            applyFilterBtn.click();
+            filterDropdown.classList.add('hidden');
+        });
+
+        window.addEventListener('click', (event) => {
+            if (!filterDropdown.contains(event.target) && !filterBtn.contains(event.target)) {
+                filterDropdown.classList.add('hidden');
+            }
+        });
+        
+         // --- SCRIPT FOR IMPORT/EXPORT ---
+        const exportBtn = document.getElementById('export-btn');
+        const importFile = document.getElementById('import-file');
+        const exportModal = document.getElementById('export-modal');
+        const cancelExportBtn = document.getElementById('cancel-export');
+        const confirmExportBtn = document.getElementById('confirm-export');
+
+        function triggerExport() {
+             const filename = document.getElementById('export-filename').value || 'dashboard-data.json';
+            const dataToExport = [];
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const topic = row.querySelector('.topic-cell').textContent.trim();
+                const title = row.querySelector('.title-cell').textContent.trim();
+                const content = row.dataset.notebookContent || '';
+                const isImportant = row.classList.contains('bg-yellow-100');
+                dataToExport.push({ topic, title, content, isImportant });
+            });
+
+            const jsonString = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            exportModal.classList.add('hidden');
+            hasUnsavedChanges = false;
+        }
+
+        exportBtn.addEventListener('click', () => {
+            exportModal.classList.remove('hidden');
+        });
+
+        cancelExportBtn.addEventListener('click', () => {
+            exportModal.classList.add('hidden');
+        });
+
+        confirmExportBtn.addEventListener('click', triggerExport);
+
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error("Invalid JSON format");
+                    
+                    tableBody.innerHTML = ''; // Clear existing table
+                    data.forEach(item => {
+                        createAndAppendRow(item);
+                    });
+                    initializeFilters();
+                    hasUnsavedChanges = false;
+                } catch (error) {
+                    console.error("Error importing file:", error);
+                    // Consider adding a user-friendly error message here
+                } finally {
+                    event.target.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // --- SCRIPT FOR UNSAVED CHANGES PROMPT ---
+        const unsavedChangesModal = document.getElementById('unsaved-changes-modal');
+        const cancelLeaveBtn = document.getElementById('cancel-leave');
+        const leaveWithoutSavingBtn = document.getElementById('leave-without-saving');
+        const exportAndLeaveBtn = document.getElementById('export-and-leave');
+
+        window.addEventListener('beforeunload', (event) => {
+            if (hasUnsavedChanges && !isLeavingPage) {
+                event.preventDefault();
+                unsavedChangesModal.classList.remove('hidden');
+                // For legacy browsers
+                event.returnValue = ''; 
+            }
+        });
+
+        cancelLeaveBtn.addEventListener('click', () => {
+            unsavedChangesModal.classList.add('hidden');
+        });
+        
+        leaveWithoutSavingBtn.addEventListener('click', () => {
+            isLeavingPage = true;
+            window.location.reload(); // Or navigate away
+        });
+        
+        exportAndLeaveBtn.addEventListener('click', () => {
+            isLeavingPage = true;
+            triggerExport();
+            // Allow a brief moment for the download to initiate
+            setTimeout(() => window.location.reload(), 100);
+        });
+
+
+        // Initial setup on page load
+        initializeFilters();
+
+    </script>
+</body>
+</html>
